@@ -1,4 +1,4 @@
-module github.com/RambollWong/rainbowcat
+module github.com/rambollwong/rainbowcat
 
 go 1.19
 
