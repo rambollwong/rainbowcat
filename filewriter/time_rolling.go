@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -174,37 +175,25 @@ func (w *TimeRollingFileWriter) tryDeleteOldFiles() {
 		fmt.Println("error while globbing files:", err)
 		return
 	}
-	if len(files) <= w.maxBackups {
+	fileCount := len(files)
+	if fileCount <= w.maxBackups {
 		return
 	}
+	sort.Slice(files, func(i, j int) bool {
+		indexTimeI, err := w.getFileIndexTime(files[i])
+		if err != nil {
+			return false
+		}
+		indexTimeJ, err := w.getFileIndexTime(files[j])
+		if err != nil {
+			return false
+		}
+		return indexTimeI.After(indexTimeJ)
+	})
 	for _, file := range files {
-		fileInfo, err := os.Stat(file)
+		fileTime, err := w.getFileIndexTime(file)
 		if err != nil {
-			fmt.Println("error while getting file info:", err)
-			continue
-		}
-		fileName := fileInfo.Name()
-		fileName = strings.TrimSuffix(fileName, w.baseFileExt)
-		fileDate := strings.TrimPrefix(fileName, w.baseFilePrefix+".")
-		var fileTime time.Time
-		switch w.rollPeriod {
-		case RollingPeriodYear:
-			fileTime, err = time.ParseInLocation("2006", fileDate, w.deleteCheckTime.Location())
-		case RollingPeriodMonth:
-			fileTime, err = time.ParseInLocation("200601", fileDate, w.deleteCheckTime.Location())
-		case RollingPeriodDay:
-			fileTime, err = time.ParseInLocation("20060102", fileDate, w.deleteCheckTime.Location())
-		case RollingPeriodHour:
-			fileTime, err = time.ParseInLocation("20060102_15", fileDate, w.deleteCheckTime.Location())
-		case RollingPeriodMinute:
-			fileTime, err = time.ParseInLocation("20060102_15_04", fileDate, w.deleteCheckTime.Location())
-		case RollingPeriodSecond:
-			fileTime, err = time.ParseInLocation("20060102_15_04_05", fileDate, w.deleteCheckTime.Location())
-		default:
-			panic("bug found! unexpected roll period value found")
-		}
-		if err != nil {
-			fmt.Println("error while parsing file time")
+			fmt.Println("error while getting file index time: " + err.Error())
 			continue
 		}
 		// Check if the file is older than the delete check time
@@ -213,7 +202,38 @@ func (w *TimeRollingFileWriter) tryDeleteOldFiles() {
 			if err != nil {
 				fmt.Println("failed to remove old file:", err)
 			}
+			fileCount--
+		}
+		if fileCount <= w.maxBackups {
 			return
 		}
 	}
+}
+
+func (w *TimeRollingFileWriter) getFileIndexTime(file string) (time.Time, error) {
+	fileInfo, err := os.Stat(file)
+	if err != nil {
+		return time.Time{}, err
+	}
+	fileName := fileInfo.Name()
+	fileName = strings.TrimSuffix(fileName, w.baseFileExt)
+	fileDate := strings.TrimPrefix(fileName, w.baseFilePrefix+".")
+	var fileTime time.Time
+	switch w.rollPeriod {
+	case RollingPeriodYear:
+		fileTime, err = time.ParseInLocation("2006", fileDate, w.deleteCheckTime.Location())
+	case RollingPeriodMonth:
+		fileTime, err = time.ParseInLocation("200601", fileDate, w.deleteCheckTime.Location())
+	case RollingPeriodDay:
+		fileTime, err = time.ParseInLocation("20060102", fileDate, w.deleteCheckTime.Location())
+	case RollingPeriodHour:
+		fileTime, err = time.ParseInLocation("20060102_15", fileDate, w.deleteCheckTime.Location())
+	case RollingPeriodMinute:
+		fileTime, err = time.ParseInLocation("20060102_15_04", fileDate, w.deleteCheckTime.Location())
+	case RollingPeriodSecond:
+		fileTime, err = time.ParseInLocation("20060102_15_04_05", fileDate, w.deleteCheckTime.Location())
+	default:
+		panic("bug found! unexpected roll period value found")
+	}
+	return fileTime, err
 }
