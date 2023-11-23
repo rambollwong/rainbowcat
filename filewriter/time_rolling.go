@@ -23,6 +23,15 @@ const (
 	RollingPeriodSecond RollingPeriod = "SECOND"
 )
 
+var (
+	TimeFormatYear   = "2006"
+	TimeFormatMonth  = "200601"
+	TimeFormatDay    = "20060102"
+	TimeFormatHour   = "20060102_15"
+	TimeFormatMinute = "20060102_15_04"
+	TimeFormatSecond = "20060102_15_04_05"
+)
+
 // TimeRollingFileWriter is a time-based rolling file writer
 type TimeRollingFileWriter struct {
 	mu              sync.Mutex
@@ -92,10 +101,10 @@ func (w *TimeRollingFileWriter) Write(bz []byte) (n int, err error) {
 // tryRotate attempts to perform file rotation
 func (w *TimeRollingFileWriter) tryRotate() error {
 	var (
-		fileName        string
 		nextCheckTime   time.Time
 		deleteCheckTime time.Time
 		now             = time.Now()
+		timeFormat      string
 	)
 
 	if time.Now().Before(w.nextCheckTime) {
@@ -110,48 +119,49 @@ func (w *TimeRollingFileWriter) tryRotate() error {
 	case RollingPeriodYear:
 		nextCheckTime = time.Date(now.Year()+1, 1, 1, 0, 0, 0, 0, now.Location())
 		deleteCheckTime = time.Date(nextCheckTime.Year()-w.maxBackups, 1, 1, 0, 0, 0, 0, now.Location())
-		fileName = fmt.Sprintf("%s.%d%s", w.baseFilePrefix, now.Year(), w.baseFileExt)
+		timeFormat = TimeFormatYear
 
 	case RollingPeriodMonth:
 		nextCheckTime = time.Date(
 			now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location(),
 		).AddDate(0, 1, 0)
 		deleteCheckTime = nextCheckTime.AddDate(0, -w.maxBackups, 0)
-		fileName = fmt.Sprintf("%s.%s%s", w.baseFilePrefix, now.Format("200601"), w.baseFileExt)
+		timeFormat = TimeFormatMonth
 
 	case RollingPeriodDay:
 		nextCheckTime = time.Date(
 			now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location(),
 		).AddDate(0, 0, 1)
 		deleteCheckTime = nextCheckTime.AddDate(0, 0, -w.maxBackups)
-		fileName = fmt.Sprintf("%s.%s%s", w.baseFilePrefix, now.Format("20060102"), w.baseFileExt)
+		timeFormat = TimeFormatDay
 
 	case RollingPeriodHour:
 		nextCheckTime = time.Date(
 			now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location(),
 		).Add(time.Hour)
 		deleteCheckTime = nextCheckTime.Add(-time.Duration(w.maxBackups) * time.Hour)
-		fileName = fmt.Sprintf("%s.%s%s", w.baseFilePrefix, now.Format("20060102_15"), w.baseFileExt)
+		timeFormat = TimeFormatHour
 
 	case RollingPeriodMinute:
 		nextCheckTime = time.Date(
 			now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location(),
 		).Add(time.Minute)
 		deleteCheckTime = nextCheckTime.Add(-time.Duration(w.maxBackups) * time.Minute)
-		fileName = fmt.Sprintf("%s.%s%s", w.baseFilePrefix, now.Format("20060102_15_04"), w.baseFileExt)
+		timeFormat = TimeFormatMinute
 
 	case RollingPeriodSecond:
 		nextCheckTime = time.Date(
 			now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, now.Location(),
 		).Add(time.Second)
 		deleteCheckTime = nextCheckTime.Add(-time.Duration(w.maxBackups) * time.Second)
-		fileName = fmt.Sprintf("%s.%s%s", w.baseFilePrefix, now.Format("20060102_15_04_05"), w.baseFileExt)
+		timeFormat = TimeFormatSecond
 
 	default:
 		return errors.New("unsupported roll period")
 	}
 
 	// Open the new file
+	fileName := fmt.Sprintf("%s.%s%s", w.baseFilePrefix, now.Format(timeFormat), w.baseFileExt)
 	file, err := os.OpenFile(filepath.Join(w.basePath, fileName), os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -221,17 +231,17 @@ func (w *TimeRollingFileWriter) getFileIndexTime(file string) (time.Time, error)
 	var fileTime time.Time
 	switch w.rollPeriod {
 	case RollingPeriodYear:
-		fileTime, err = time.ParseInLocation("2006", fileDate, w.deleteCheckTime.Location())
+		fileTime, err = time.ParseInLocation(TimeFormatYear, fileDate, w.deleteCheckTime.Location())
 	case RollingPeriodMonth:
-		fileTime, err = time.ParseInLocation("200601", fileDate, w.deleteCheckTime.Location())
+		fileTime, err = time.ParseInLocation(TimeFormatMonth, fileDate, w.deleteCheckTime.Location())
 	case RollingPeriodDay:
-		fileTime, err = time.ParseInLocation("20060102", fileDate, w.deleteCheckTime.Location())
+		fileTime, err = time.ParseInLocation(TimeFormatDay, fileDate, w.deleteCheckTime.Location())
 	case RollingPeriodHour:
-		fileTime, err = time.ParseInLocation("20060102_15", fileDate, w.deleteCheckTime.Location())
+		fileTime, err = time.ParseInLocation(TimeFormatHour, fileDate, w.deleteCheckTime.Location())
 	case RollingPeriodMinute:
-		fileTime, err = time.ParseInLocation("20060102_15_04", fileDate, w.deleteCheckTime.Location())
+		fileTime, err = time.ParseInLocation(TimeFormatMinute, fileDate, w.deleteCheckTime.Location())
 	case RollingPeriodSecond:
-		fileTime, err = time.ParseInLocation("20060102_15_04_05", fileDate, w.deleteCheckTime.Location())
+		fileTime, err = time.ParseInLocation(TimeFormatSecond, fileDate, w.deleteCheckTime.Location())
 	default:
 		panic("bug found! unexpected roll period value found")
 	}
