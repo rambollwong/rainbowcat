@@ -204,6 +204,7 @@ func (w *TimeRollingFileWriter) tryDeleteOldFiles() {
 		fileTime, err := w.getFileIndexTime(file)
 		if err != nil {
 			fmt.Println("error while getting file index time: " + err.Error())
+			fileCount--
 			continue
 		}
 		// Check if the file is older than the delete check time

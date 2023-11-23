@@ -95,6 +95,7 @@ func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 	for _, file := range files {
 		fileIndexInt := w.getFileIndex(file)
 		if fileIndexInt == 0 {
+			fileCount--
 			continue
 		}
 		if fileCount > w.maxBackups && fileIndexInt > w.maxBackups-1 {
