@@ -221,6 +221,8 @@ func (w *TimeRollingFileWriter) tryDeleteOldFiles() {
 	}
 }
 
+// getFileIndexTime extracts the index time from the given file name.
+// It parses the file name based on the rolling period and returns the corresponding time value.
 func (w *TimeRollingFileWriter) getFileIndexTime(file string) (time.Time, error) {
 	fileInfo, err := os.Stat(file)
 	if err != nil {
