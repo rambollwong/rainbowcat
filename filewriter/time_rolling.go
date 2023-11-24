@@ -190,7 +190,7 @@ func (w *TimeRollingFileWriter) tryRotate() error {
 
 // tryDeleteOldFiles tries to delete old files based on the delete check time
 func (w *TimeRollingFileWriter) tryDeleteOldFiles() {
-	files, err := filepath.Glob(filepath.Join(w.basePath, "*"+w.baseFileExt))
+	files, err := filepath.Glob(filepath.Join(w.basePath, w.baseFilePrefix+".*"+w.baseFileExt))
 	if err != nil {
 		fmt.Println("error while globbing files:", err)
 		return

@@ -99,7 +99,7 @@ func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 		return nil
 	}
 
-	files, err := filepath.Glob(filepath.Join(w.basePath, "*"+w.baseFileExt))
+	files, err := filepath.Glob(filepath.Join(w.basePath, w.baseFilePrefix+".*"+w.baseFileExt))
 	if err != nil {
 		return errors.New("error while globbing files: " + err.Error())
 	}
