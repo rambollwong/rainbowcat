@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// SizeRollingFileWriter is a file writer with rolling based on file size
+// SizeRollingFileWriter is a file writer with rolling based on file size.
 type SizeRollingFileWriter struct {
 	mu          sync.Mutex
 	file        *os.File
@@ -24,7 +24,17 @@ type SizeRollingFileWriter struct {
 	fileSizeLimit  int64
 }
 
-// NewSizeRollingFileWriter creates a new SizeRollingFileWriter instance with the given parameters
+// NewSizeRollingFileWriter creates a new SizeRollingFileWriter instance with the given parameters.
+//
+//	params:
+//		- basePath: defines the path to save the files.
+//		- baseFileName: defines the base name of the files. When file rotating occurs,
+//			files may be renamed according to a specific format.
+//		- maxBackups: defines the maximum number of file backups to keep.
+//			If there is no limit, set the value to a negative value.
+//	 	- fileSizeLimit: defines the maximum size of each file in bytes.
+//	 		When maxBackups is not a negative value, if the current file size reaches the upper limit,
+//	 		rotation will be triggered.
 func NewSizeRollingFileWriter(
 	basePath, baseFileName string,
 	maxBackups int,
@@ -51,7 +61,7 @@ func NewSizeRollingFileWriter(
 	return w, nil
 }
 
-// Close closes the file writer
+// Close closes the file writer.
 func (w *SizeRollingFileWriter) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -63,7 +73,7 @@ func (w *SizeRollingFileWriter) Close() error {
 	return nil
 }
 
-// Write writes data to the file
+// Write writes data to the file.
 func (w *SizeRollingFileWriter) Write(bz []byte) (n int, err error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -78,7 +88,7 @@ func (w *SizeRollingFileWriter) Write(bz []byte) (n int, err error) {
 	return
 }
 
-// tryRotate checks if the current file size exceeds the limit and performs log rotation if necessary
+// tryRotate checks if the current file size exceeds the limit and performs log rotation if necessary.
 func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 	if w.currentSize == 0 || w.currentSize+bytesLength <= w.fileSizeLimit {
 		return nil
@@ -128,7 +138,7 @@ func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 	return w.openFile()
 }
 
-// openFile opens the current log file for writing
+// openFile opens the current log file for writing.
 func (w *SizeRollingFileWriter) openFile() error {
 	file, err := os.OpenFile(filepath.Join(w.basePath, w.baseFilePrefix+w.baseFileExt), os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
@@ -144,7 +154,7 @@ func (w *SizeRollingFileWriter) openFile() error {
 	return nil
 }
 
-// getFileIndex extracts the index number from the file name
+// getFileIndex extracts the index number from the file name.
 func (w *SizeRollingFileWriter) getFileIndex(file string) int {
 	fileInfo, err := os.Stat(file)
 	if err != nil {

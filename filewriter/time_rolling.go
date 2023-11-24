@@ -46,7 +46,15 @@ type TimeRollingFileWriter struct {
 	rollPeriod     RollingPeriod
 }
 
-// NewTimeRollingFileWriter creates a new instance of TimeRollingFileWriter
+// NewTimeRollingFileWriter creates a new instance of TimeRollingFileWriter.
+//
+//	params:
+//		- basePath: defines the path to save the files.
+//		- baseFileName: defines the base name of the files. When file rotating occurs,
+//			files may be renamed according to a specific format.
+//		- maxBackups: defines the maximum number of file backups to keep.
+//			If there is no limit, set the value to a negative value.
+//		- rollPeriod: specify the time rolling period.
 func NewTimeRollingFileWriter(
 	basePath, baseFileName string,
 	maxBackups int,
@@ -172,8 +180,10 @@ func (w *TimeRollingFileWriter) tryRotate() error {
 	w.nextCheckTime = nextCheckTime
 	w.deleteCheckTime = deleteCheckTime
 
-	// Try to delete old files
-	go w.tryDeleteOldFiles()
+	if w.maxBackups >= 0 {
+		// Try to delete old files
+		go w.tryDeleteOldFiles()
+	}
 
 	return nil
 }
