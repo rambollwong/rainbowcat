@@ -33,7 +33,7 @@ type SizeRollingFileWriter struct {
 //		- maxBackups: defines the maximum number of file backups to keep.
 //			If there is no limit, set the value to a negative value.
 //	 	- fileSizeLimit: defines the maximum size of each file in bytes.
-//	 		When maxBackups is not a negative value, if the current file size reaches the upper limit,
+//	 		When maxBackups is a positive value, if the current file size reaches the upper limit,
 //	 		rotation will be triggered.
 func NewSizeRollingFileWriter(
 	basePath, baseFileName string,
@@ -84,12 +84,17 @@ func (w *SizeRollingFileWriter) Write(bz []byte) (n int, err error) {
 	if err != nil {
 		return n, err
 	}
-	w.currentSize += int64(n)
+	if w.fileSizeLimit > 0 {
+		w.currentSize += int64(n)
+	}
 	return
 }
 
 // tryRotate checks if the current file size exceeds the limit and performs log rotation if necessary.
 func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
+	if w.fileSizeLimit <= 0 {
+		return nil
+	}
 	if w.currentSize == 0 || w.currentSize+bytesLength <= w.fileSizeLimit {
 		return nil
 	}
@@ -99,9 +104,11 @@ func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 		return errors.New("error while globbing files: " + err.Error())
 	}
 	fileCount := len(files)
+	// sort files name
 	sort.Slice(files, func(i, j int) bool {
 		return w.getFileIndex(files[i]) > w.getFileIndex(files[j])
 	})
+	// try to remove old files and rotate backups
 	for _, file := range files {
 		fileIndexInt := w.getFileIndex(file)
 		if fileIndexInt == 0 {
@@ -122,7 +129,7 @@ func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 			return err
 		}
 	}
-
+	// try to rotate current file
 	if w.file != nil {
 		_ = w.file.Close()
 		newFileName := fmt.Sprintf("%s.1%s", w.baseFilePrefix, w.baseFileExt)
