@@ -115,7 +115,7 @@ func (w *SizeRollingFileWriter) tryRotate(bytesLength int64) error {
 			fileCount--
 			continue
 		}
-		if fileCount > w.maxBackups && fileIndexInt > w.maxBackups-1 {
+		if fileCount > w.maxBackups && fileIndexInt >= w.maxBackups {
 			err = os.Remove(file)
 			if err != nil {
 				return errors.New("error while removing file: " + err.Error())
