@@ -72,12 +72,12 @@ func TestSizeRollingFileWriter_Write(t *testing.T) {
 	}
 
 	// Verify the number of backup files matches the expected value
-	backupFiles, err := filepath.Glob(filepath.Join(tempDir, "*.log"))
+	backupFiles, err := filepath.Glob(filepath.Join(tempDir, "test.*.log"))
 	if err != nil {
 		t.Fatal("Error globbing backup files:", err)
 	}
 
-	if len(backupFiles) != maxBackups+1 {
+	if len(backupFiles) != maxBackups {
 		t.Fatalf("Expected %d backup files, got %d", maxBackups, len(backupFiles))
 	}
 }
