@@ -1,6 +1,8 @@
 package util
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -232,4 +234,370 @@ func TestSliceUnion(t *testing.T) {
 	require.Equal(t, []int{}, res3)
 	require.Equal(t, []int{1}, res4)
 	require.Equal(t, []int{1, 2, 3, 5, 4, 6}, res5)
+}
+
+func TestSliceUnionBy(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceUnionBy(func(_, item int) int {
+		return item % 3
+	}, []int{0, 1, 2, 3, 4, 5})
+	res2 := SliceUnionBy(func(_, item int) int {
+		return item % 3
+	}, []int{0, 1}, []int{2, 3, 4})
+
+	require.Equal(t, []int{0, 1, 2}, res1)
+	require.Equal(t, []int{0, 1, 2}, res2)
+}
+
+func TestSliceFilter(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceFilter([]int{0, 1, 2, 3, 4, 5, 6}, func(_ int, item int) bool {
+		return item%2 == 0
+	})
+
+	require.Equal(t, []int{0, 2, 4, 6}, res1)
+}
+
+func TestSliceTransformType(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceTransformType([]int{0, 1, 2}, func(_ int, item int) string {
+		return strconv.Itoa(item)
+	})
+
+	require.Equal(t, []string{"0", "1", "2"}, res1)
+}
+
+func TestSliceFilterTransformType(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceFilterTransformType([]int{0, 1, 2, 3, 4}, func(index int, item int) (string, bool) {
+		return strconv.Itoa(item), index%2 == 0
+	})
+
+	require.Equal(t, []string{"0", "2", "4"}, res1)
+}
+
+func TestSliceFlatten(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceFlatten([][]int{{0, 1}, {2, 3}})
+
+	require.Equal(t, []int{0, 1, 2, 3}, res1)
+}
+
+func TestSliceFlattenTransformType(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceFlattenTransformType([]string{"0,1", "2,3"}, func(_ int, item string) []string {
+		return strings.Split(item, ",")
+	})
+
+	require.Equal(t, []string{"0", "1", "2", "3"}, res1)
+}
+
+func TestSliceReduce(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceReduce([]int{1, 2, 3, 4}, func(agg int, item int, _ int) int {
+		return agg + item
+	}, 0)
+	res2 := SliceReduce([]int{1, 2, 3, 4}, func(agg int, item int, _ int) int {
+		return agg + item
+	}, 11)
+
+	require.Equal(t, 10, res1)
+	require.Equal(t, 21, res2)
+}
+
+func TestSliceReduceRight(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceReduceRight([][]int{{1}, {2}, {4, 3}}, func(agg []int, item []int, _ int) []int {
+		return append(agg, item...)
+	}, []int{})
+
+	require.Equal(t, []int{4, 3, 2, 1}, res1)
+}
+
+func TestSliceGroupBy(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceGroupBy([]int{1, 2, 3, 4}, func(item int) int {
+		return item % 3
+	})
+
+	require.Equal(t, 3, len(res1))
+	require.Equal(t, []int{3}, res1[0])
+	require.Equal(t, []int{1, 4}, res1[1])
+	require.Equal(t, []int{2}, res1[2])
+}
+
+func TestSliceOrderedGroupBy(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceOrderedGroupBy([]int{1, 2, 3, 4}, func(item int) int {
+		return item % 3
+	})
+
+	require.Equal(t, 3, len(res1))
+	require.Equal(t, []int{1, 4}, res1[0])
+	require.Equal(t, []int{2}, res1[1])
+	require.Equal(t, []int{3}, res1[2])
+}
+
+func TestSliceCutChunks(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceCutChunks([]int{1, 2, 3, 4}, 2)
+	res2 := SliceCutChunks([]int{1, 2, 3, 4, 5}, 2)
+
+	require.Equal(t, [][]int{{1, 2}, {3, 4}}, res1)
+	require.Equal(t, [][]int{{1, 2}, {3, 4}, {5}}, res2)
+}
+
+func TestSliceInterleaveFlatten(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceInterleaveFlatten([][]int{{0, 1}, {2, 3, 4, 5}, {6, 7, 8}}...)
+
+	require.Equal(t, []int{0, 2, 6, 1, 3, 7, 4, 8, 5}, res1)
+}
+
+func TestSliceShuffle(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceShuffle([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
+	res2 := SliceShuffle([]int{})
+
+	require.NotEqual(t, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, res1)
+	require.Equal(t, []int{}, res2)
+}
+
+func TestSliceReverse(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceReverse([]int{0, 1, 2, 3, 4, 5})
+	res2 := SliceReverse([]int{0, 1, 2, 1, 2})
+	res3 := SliceReverse([]int{})
+
+	require.Equal(t, []int{5, 4, 3, 2, 1, 0}, res1)
+	require.Equal(t, []int{2, 1, 2, 1, 0}, res2)
+	require.Equal(t, []int{}, res3)
+}
+
+func TestSliceFill(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceFill([]foo{"a", "a"}, "b")
+	res2 := SliceFill([]foo{}, "b")
+
+	require.Equal(t, []foo{"b", "b"}, res1)
+	require.Equal(t, []foo{}, res2)
+}
+
+func TestSliceRepeat(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceRepeat[foo](2, "b")
+	res2 := SliceRepeat[foo](0, "b")
+
+	require.Equal(t, []foo{"b", "b"}, res1)
+	require.Equal(t, []foo{}, res2)
+}
+
+func TestSliceRepeatBy(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceRepeatBy(2, func(index int) foo {
+		return foo(strconv.Itoa(index))
+	})
+	res2 := SliceRepeatBy(0, func(index int) foo {
+		return foo(strconv.Itoa(index))
+	})
+
+	require.Equal(t, []foo{"0", "1"}, res1)
+	require.Equal(t, []foo{}, res2)
+}
+
+func TestSliceToMap(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceToMap([]string{"s", "sss", "ss"}, func(item string) (int, string) {
+		return len(item), item
+	})
+
+	require.Equal(t, map[int]string{1: "s", 2: "ss", 3: "sss"}, res1)
+}
+
+func TestSliceCutLeft(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, []int{1, 2, 3, 4}, SliceCutLeft([]int{0, 1, 2, 3, 4}, 1))
+	require.Equal(t, []int{2, 3, 4}, SliceCutLeft([]int{0, 1, 2, 3, 4}, 2))
+	require.Equal(t, []int{3, 4}, SliceCutLeft([]int{0, 1, 2, 3, 4}, 3))
+	require.Equal(t, []int{4}, SliceCutLeft([]int{0, 1, 2, 3, 4}, 4))
+	require.Equal(t, []int{}, SliceCutLeft([]int{0, 1, 2, 3, 4}, 5))
+	require.Equal(t, []int{}, SliceCutLeft([]int{0, 1, 2, 3, 4}, 6))
+}
+
+func TestSliceCutRight(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, []int{0, 1, 2, 3}, SliceCutRight([]int{0, 1, 2, 3, 4}, 1))
+	require.Equal(t, []int{0, 1, 2}, SliceCutRight([]int{0, 1, 2, 3, 4}, 2))
+	require.Equal(t, []int{0, 1}, SliceCutRight([]int{0, 1, 2, 3, 4}, 3))
+	require.Equal(t, []int{0}, SliceCutRight([]int{0, 1, 2, 3, 4}, 4))
+	require.Equal(t, []int{}, SliceCutRight([]int{0, 1, 2, 3, 4}, 5))
+	require.Equal(t, []int{}, SliceCutRight([]int{0, 1, 2, 3, 4}, 6))
+}
+
+func TestSliceCutLeftOn(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceCutLeftOn([]int{0, 1, 2, 3}, func(item int) bool {
+		return item == 2
+	})
+	res2 := SliceCutLeftOn([]int{}, func(item int) bool {
+		return item == 2
+	})
+
+	require.Equal(t, []int{2, 3}, res1)
+	require.Equal(t, []int{}, res2)
+}
+
+func TestSliceCutRightOn(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceCutRightOn([]int{0, 1, 2, 3}, func(item int) bool {
+		return item == 2
+	})
+	res2 := SliceCutRightOn([]int{}, func(item int) bool {
+		return item == 2
+	})
+
+	require.Equal(t, []int{0, 1, 2}, res1)
+	require.Equal(t, []int{}, res2)
+}
+
+func TestSliceValueCount(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceValueCount([]int{0, 1, 2, 1, 3, 4}, 1)
+	res2 := SliceValueCount([]int{0, 1, 2, 1, 3, 4}, 5)
+	res3 := SliceValueCount([]int{}, 5)
+
+	require.Equal(t, 2, res1)
+	require.Equal(t, 0, res2)
+	require.Equal(t, 0, res3)
+}
+
+func TestSliceValueCountBy(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceValueCountBy([]int{0, 1, 2, 1, 3, 4}, func(item int) bool {
+		return item == 1
+	})
+	res2 := SliceValueCountBy([]int{0, 1, 2, 1, 3, 4}, func(item int) bool {
+		return item == 5
+	})
+	res3 := SliceValueCountBy([]int{}, func(item int) bool {
+		return item == 1
+	})
+
+	require.Equal(t, 2, res1)
+	require.Equal(t, 0, res2)
+	require.Equal(t, 0, res3)
+}
+
+func TestSliceValuesCount(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceValuesCount([]int{0, 1, 1, 2, 2, 2, 3, 3, 3, 3})
+	res2 := SliceValuesCount([]int{})
+
+	require.Equal(t, map[int]int{0: 1, 1: 2, 2: 3, 3: 4}, res1)
+	require.Equal(t, map[int]int{}, res2)
+}
+
+func TestSliceValuesCountBy(t *testing.T) {
+	t.Parallel()
+
+	res1 := SliceValuesCountBy([]int{0, 1, 1, 2, 2, 2, 3, 3, 3, 3}, func(item int) int {
+		return item % 2
+	})
+	res2 := SliceValuesCountBy([]int{}, func(item int) int {
+		return item % 2
+	})
+
+	require.Equal(t, map[int]int{0: 4, 1: 6}, res1)
+	require.Equal(t, map[int]int{}, res2)
+}
+
+func TestSliceSubset(t *testing.T) {
+	t.Parallel()
+
+	arr := []int{1, 2, 3, 4, 5, 6}
+	res1 := SliceSubset(arr, 2, 2)
+	res2 := SliceSubset(arr, 0, 2)
+	res3 := SliceSubset(arr, -3, 2)
+	res4 := SliceSubset(arr, 2, 10)
+	res5 := SliceSubset(arr, 10, 2)
+	res6 := SliceSubset(arr, -10, 2)
+
+	require.Equal(t, []int{3, 4}, res1)
+	require.Equal(t, []int{1, 2}, res2)
+	require.Equal(t, []int{4, 5}, res3)
+	require.Equal(t, []int{3, 4, 5, 6}, res4)
+	require.Equal(t, []int{}, res5)
+	require.Equal(t, []int{1, 2}, res6)
+}
+
+func TestSliceParagraph(t *testing.T) {
+	t.Parallel()
+
+	arr := []int{1, 2, 3, 4, 5, 6}
+	res1 := SliceParagraph(arr, 0, 0)
+	res2 := SliceParagraph(arr, 1, 2)
+	res3 := SliceParagraph(arr, 0, 3)
+	res4 := SliceParagraph(arr, 1, 7)
+	res5 := SliceParagraph(arr, -8, 2)
+	res6 := SliceParagraph(arr, 3, 2)
+	res7 := SliceParagraph(arr, -5, -2)
+
+	require.Equal(t, []int{}, res1)
+	require.Equal(t, []int{2}, res2)
+	require.Equal(t, []int{1, 2, 3}, res3)
+	require.Equal(t, []int{2, 3, 4, 5, 6}, res4)
+	require.Equal(t, []int{1, 2}, res5)
+	require.Equal(t, []int{}, res6)
+	require.Equal(t, []int{}, res7)
+}
+
+func TestSliceReplace(t *testing.T) {
+	t.Parallel()
+
+	arr := []int{1, 2, 2, 3, 3, 3, 4, 4, 4, 4}
+	res1 := SliceReplace(arr, 3, 5, 0)
+	res2 := SliceReplace(arr, 3, 5, 2)
+	res3 := SliceReplace(arr, 3, 5, -1)
+	res4 := SliceReplace(arr, 6, 5, 1)
+
+	require.Equal(t, arr, res1)
+	require.Equal(t, []int{1, 2, 2, 5, 5, 3, 4, 4, 4, 4}, res2)
+	require.Equal(t, []int{1, 2, 2, 5, 5, 5, 4, 4, 4, 4}, res3)
+	require.Equal(t, arr, res4)
+}
+
+func TestSliceReplaceAll(t *testing.T) {
+	t.Parallel()
+
+	arr := []int{1, 2, 2, 3, 3, 3, 4, 4, 4, 4}
+	res1 := SliceReplaceAll(arr, 3, 5)
+	res2 := SliceReplaceAll(arr, 6, 5)
+
+	require.Equal(t, []int{1, 2, 2, 5, 5, 5, 4, 4, 4, 4}, res1)
+	require.Equal(t, arr, res2)
 }
