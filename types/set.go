@@ -10,6 +10,10 @@ type Set[T any] struct {
 	m    sync.Map
 }
 
+func NewSet[T any]() *Set[T] {
+	return &Set[T]{}
+}
+
 func (s *Set[T]) Put(v T) bool {
 	_, ok := s.m.LoadOrStore(v, struct{}{})
 	if !ok {
