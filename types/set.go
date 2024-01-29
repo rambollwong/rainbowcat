@@ -29,11 +29,12 @@ func (s *Set[T]) Put(v T) bool {
 // Pop removes an element from the set.
 // It returns the removed element and a boolean indicating whether the element existed in the set.
 func (s *Set[T]) Pop(v T) (T, bool) {
-	t, ok := s.m.LoadAndDelete(v)
+	_, ok := s.m.LoadAndDelete(v)
 	if ok {
 		atomic.AddInt64(&s.size, -1)
+		return v, true
 	}
-	return t.(T), ok
+	return v, false
 }
 
 // Remove removes an element from the set.
