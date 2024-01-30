@@ -5,19 +5,19 @@ import (
 )
 
 // Task defines the function signature of a task, which takes an input and returns an output and an error.
-type Task func(input any) (output any, err error)
+type Task func(input any) (output any, ok bool)
 
 // TaskProvider interface defines a Task() method that returns a Task function.
 type TaskProvider interface {
 	Task() Task
 }
 
-// GenericTaskProvider is a function type that takes an input of type I and returns an output of type O along with an error.
-type GenericTaskProvider[I, O any] func(input I) (output O, err error)
+// GenericTaskProvider is a function type that takes an input of type I and returns an output of type O along.
+type GenericTaskProvider[I, O any] func(input I) (output O, ok bool)
 
 // Task method converts a GenericTaskProvider to a TaskProvider.
 func (g GenericTaskProvider[I, O]) Task() Task {
-	return func(input any) (output any, err error) {
+	return func(input any) (output any, ok bool) {
 		return g(input.(I))
 	}
 }
@@ -27,7 +27,7 @@ func (g GenericTaskProvider[I, O]) Task() Task {
 type Job struct {
 	Input     any
 	Output    any
-	Err       error
+	Ok        bool
 	FinishedC chan struct{}
 
 	tp *taskPipeline
@@ -45,7 +45,7 @@ func (j *Job) do() {
 
 // run method executes the task associated with the job and sends the output and error to the appropriate channels.
 func (j *Job) run() {
-	j.Output, j.Err = j.tp.jobTask(j.Input)
+	j.Output, j.Ok = j.tp.jobTask(j.Input)
 	select {
 	case <-j.tp.ptp.closeC:
 	case j.FinishedC <- struct{}{}:
@@ -58,7 +58,7 @@ func (j *Job) run() {
 type taskPipeline struct {
 	index   uint8
 	jobC    chan *Job
-	jobTask func(input any) (output any, err error)
+	jobTask Task
 
 	ptp *ParallelTaskPipeline
 }
@@ -79,7 +79,7 @@ func (tp *taskPipeline) loop() {
 					}
 					continue
 				}
-				if job.Err != nil {
+				if !job.Ok {
 					continue
 				}
 				job.Input = job.Output
@@ -156,7 +156,7 @@ func (p *ParallelTaskPipeline) PushJob(input any) {
 	job := &Job{
 		Input:     input,
 		Output:    nil,
-		Err:       nil,
+		Ok:        false,
 		FinishedC: make(chan struct{}),
 		tp:        firstTP,
 	}

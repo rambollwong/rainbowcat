@@ -12,9 +12,9 @@ type MockTaskProvider struct{}
 
 // Task is a mock implementation of the Task() method that returns a dummy task function.
 func (m *MockTaskProvider) Task() Task {
-	return func(input any) (output any, err error) {
+	return func(input any) (output any, ok bool) {
 		// Dummy task that simply appends "processed" to the input string
-		return fmt.Sprintf("%s processed", input.(string)), nil
+		return fmt.Sprintf("%s processed", input.(string)), true
 	}
 }
 
