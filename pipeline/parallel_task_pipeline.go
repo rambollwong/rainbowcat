@@ -4,7 +4,8 @@ import (
 	"errors"
 )
 
-// Task defines the function signature of a task, which takes an input and returns an output and an error.
+// Task defines the function signature of a task, which takes an input and returns an output and a boolean.
+// If the returned boolean is false, the task will be terminated and the job will be ignored.
 type Task func(input any) (output any, ok bool)
 
 // TaskProvider interface defines a Task() method that returns a Task function.
@@ -12,7 +13,7 @@ type TaskProvider interface {
 	Task() Task
 }
 
-// GenericTaskProvider is a function type that takes an input of type I and returns an output of type O along.
+// GenericTaskProvider is a function type that takes an input of type I and returns an output of type O.
 type GenericTaskProvider[I, O any] func(input I) (output O, ok bool)
 
 // Task method converts a GenericTaskProvider to a TaskProvider.
@@ -23,7 +24,7 @@ func (g GenericTaskProvider[I, O]) Task() Task {
 }
 
 // Job struct represents a job to be executed in the pipeline.
-// It contains an input, output, error, and a channel to signal job completion.
+// It contains an input, output, a flag indicating if the job is successful, and a channel to signal job completion.
 type Job struct {
 	Input     any
 	Output    any
