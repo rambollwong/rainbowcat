@@ -1,34 +1,35 @@
 package smtp
 
 import (
-	"fmt"
-	"net/smtp"
-	"strconv"
+	"gopkg.in/gomail.v2"
 )
 
 // MailSender represents an SMTP mail sender.
 type MailSender struct {
-	smtpServer, sender, pwd, nickname string
-	smtpPort                          int
+	sender, nickname string
+	cli              *gomail.Dialer
 }
 
 // NewMailSender creates a new MailSender instance with the provided SMTP server details.
 func NewMailSender(smtpServer string, smtpPort int, sender, pwd, nickname string) *MailSender {
+	dialer := gomail.NewDialer(smtpServer, smtpPort, sender, pwd)
 	return &MailSender{
-		smtpServer: smtpServer,
-		sender:     sender,
-		pwd:        pwd,
-		nickname:   nickname,
-		smtpPort:   smtpPort,
+		sender:   sender,
+		nickname: nickname,
+		cli:      dialer,
 	}
 }
 
 // SendMail sends an email using the configured SMTP server.
-func (m *MailSender) SendMail(recipient, subject, body string) error {
-	auth := smtp.PlainAuth("", m.sender, m.pwd, m.smtpServer)
+func (m *MailSender) SendMail(recipient, subject, body, bodyContentType string, cc []string) error {
+	msg := gomail.NewMessage(gomail.SetCharset("UTF-8"))
+	msg.SetAddressHeader("From", m.sender, m.nickname)
+	msg.SetHeader("To", recipient)
+	msg.SetHeader("Subject", subject)
+	msg.SetBody(bodyContentType, body)
+	if len(cc) > 0 {
+		msg.SetHeader("Cc", cc...)
+	}
 
-	message := []byte(fmt.Sprintf("From: %s <%s>\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\nContent-Type: text/html; charset=UTF-8\n\r\n%s\r\n",
-		m.nickname, m.sender, recipient, subject, body))
-
-	return smtp.SendMail(m.smtpServer+":"+strconv.Itoa(m.smtpPort), auth, m.sender, []string{recipient}, message)
+	return m.cli.DialAndSend(msg)
 }
