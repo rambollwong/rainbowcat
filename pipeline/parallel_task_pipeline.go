@@ -78,14 +78,16 @@ func (tp *taskPipeline) loop() {
 					if !tp.ptp.noOutput {
 						tp.ptp.outputC <- job.Output
 					}
+					close(job.FinishedC)
 					continue
 				}
 				if !job.Ok {
+					close(job.FinishedC)
 					continue
 				}
 				job.Input = job.Output
 				job.Output = nil
-				job.FinishedC = make(chan struct{})
+				//job.FinishedC = make(chan struct{})
 				job.tp = tp.ptp.pipelines[tp.index+1]
 				job.do()
 			}
