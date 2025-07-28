@@ -52,8 +52,8 @@ func WithContext(ctx context.Context) Option {
 	}
 }
 
-// New creates a new worker pool with the specified number of workers
-func New(workers int, opts ...Option) *WorkerPool {
+// NewWorkerPool creates a new worker pool with the specified number of workers
+func NewWorkerPool(workers int, opts ...Option) *WorkerPool {
 	if workers <= 0 {
 		workers = 1
 	}

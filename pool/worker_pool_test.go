@@ -11,7 +11,7 @@ import (
 
 func TestNewWorkerPool(t *testing.T) {
 	// Test creating a worker pool with positive number of workers
-	pool := New(5)
+	pool := NewWorkerPool(5)
 	require.NotNil(t, pool)
 	require.Equal(t, 5, pool.RunningWorkers())
 	pool.Close()
@@ -19,14 +19,14 @@ func TestNewWorkerPool(t *testing.T) {
 
 func TestNewWorkerPoolWithZeroWorkers(t *testing.T) {
 	// Test creating a worker pool with zero workers (should default to 1)
-	pool := New(0)
+	pool := NewWorkerPool(0)
 	require.NotNil(t, pool)
 	require.Equal(t, 1, pool.RunningWorkers())
 	pool.Close()
 }
 
 func TestSubmitTask(t *testing.T) {
-	pool := New(3)
+	pool := NewWorkerPool(3)
 	defer pool.Close()
 
 	var counter int32
@@ -47,7 +47,7 @@ func TestSubmitTask(t *testing.T) {
 }
 
 func TestSubmitTaskToClosedPool(t *testing.T) {
-	pool := New(1)
+	pool := NewWorkerPool(1)
 	pool.Close()
 
 	task := func() {}
@@ -62,7 +62,7 @@ func TestSubmitTaskWithRejectHandler(t *testing.T) {
 		atomic.AddInt32(&rejectedTasks, 1)
 	}
 
-	pool := New(1, WithRejectHandler(rejectHandler))
+	pool := NewWorkerPool(1, WithRejectHandler(rejectHandler))
 	pool.Close()
 
 	task := func() {}
@@ -73,7 +73,7 @@ func TestSubmitTaskWithRejectHandler(t *testing.T) {
 }
 
 func TestCloseWithTimeout(t *testing.T) {
-	pool := New(2)
+	pool := NewWorkerPool(2)
 	defer pool.Close()
 
 	// Submit a long-running task
@@ -95,7 +95,7 @@ func TestCloseWithTimeout(t *testing.T) {
 
 func TestPendingTasks(t *testing.T) {
 	// Create a pool with buffered task channel
-	pool := New(1, WithBufferSize(5))
+	pool := NewWorkerPool(1, WithBufferSize(5))
 	defer pool.Close()
 
 	// Submit tasks that take some time to complete
@@ -119,7 +119,7 @@ func TestPendingTasks(t *testing.T) {
 }
 
 func TestRunningWorkers(t *testing.T) {
-	pool := New(5)
+	pool := NewWorkerPool(5)
 	require.Equal(t, 5, pool.RunningWorkers())
 
 	pool.Close()
@@ -130,7 +130,7 @@ func TestWithContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Create a pool with a context that will be cancelled
-	pool := New(2, WithContext(ctx))
+	pool := NewWorkerPool(2, WithContext(ctx))
 	defer pool.Close()
 
 	var counter int32
