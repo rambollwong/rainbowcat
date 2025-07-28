@@ -154,3 +154,19 @@ func TestWithContextCancellation(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	require.Equal(t, int32(1), atomic.LoadInt32(&counter))
 }
+
+func TestWorkerPool_RunningWorkers(t *testing.T) {
+	pool := NewWorkerPool(5)
+	defer pool.Close()
+
+	// Should report the correct number of running workers
+	running := pool.RunningWorkers()
+	require.Equal(t, 5, running)
+
+	// Close the pool
+	pool.Close()
+
+	// Should report 0 running workers after closing
+	running = pool.RunningWorkers()
+	require.Equal(t, 0, running)
+}

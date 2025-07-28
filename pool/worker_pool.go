@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,7 +16,8 @@ type WorkerPool struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
-	tasks         chan Task
+	tasksC        chan Task
+	runningTasks  int32
 	workers       int
 	running       bool
 	mu            sync.RWMutex
@@ -36,7 +38,7 @@ func WithRejectHandler(handler func(Task)) Option {
 func WithBufferSize(size int) Option {
 	return func(pool *WorkerPool) {
 		if size > 0 {
-			pool.tasks = make(chan Task, size)
+			pool.tasksC = make(chan Task, size)
 		}
 	}
 }
@@ -64,7 +66,7 @@ func NewWorkerPool(workers int, opts ...Option) *WorkerPool {
 		ctx:     ctx,
 		cancel:  cancel,
 		workers: workers,
-		tasks:   make(chan Task), // Unbuffered channel by default
+		tasksC:  make(chan Task), // Unbuffered channel by default
 		running: true,
 	}
 
@@ -88,11 +90,13 @@ func (p *WorkerPool) startWorkers() {
 				select {
 				case <-p.ctx.Done():
 					return
-				case task, ok := <-p.tasks:
+				case task, ok := <-p.tasksC:
 					if !ok {
 						return
 					}
+					atomic.AddInt32(&p.runningTasks, 1)
 					task()
+					atomic.AddInt32(&p.runningTasks, -1)
 				}
 			}
 		}()
@@ -117,7 +121,7 @@ func (p *WorkerPool) Submit(task Task) error {
 			p.rejectHandler(task)
 		}
 		return errors.New("worker pool is closing")
-	case p.tasks <- task:
+	case p.tasksC <- task:
 		return nil
 	}
 }
@@ -133,7 +137,7 @@ func (p *WorkerPool) Close() {
 
 	p.running = false
 	p.cancel() // Signal all workers to exit
-	close(p.tasks)
+	close(p.tasksC)
 	p.wg.Wait() // Wait for all workers to complete
 }
 
@@ -151,7 +155,7 @@ func (p *WorkerPool) CloseWithTimeout(timeout time.Duration) bool {
 
 	done := make(chan struct{})
 	go func() {
-		close(p.tasks)
+		close(p.tasksC)
 		p.wg.Wait()
 		close(done)
 	}()
@@ -186,5 +190,14 @@ func (p *WorkerPool) PendingTasks() int {
 		return 0
 	}
 
-	return len(p.tasks)
+	return len(p.tasksC)
+}
+
+// RunningTasks returns the number of tasks currently being executed by the worker pool.
+// This count is incremented when a task starts executing and decremented when it completes.
+// Returns:
+//
+//	int - The number of currently running tasks
+func (p *WorkerPool) RunningTasks() int {
+	return int(atomic.LoadInt32(&p.runningTasks))
 }
