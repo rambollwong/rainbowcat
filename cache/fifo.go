@@ -20,12 +20,22 @@ type FIFOCache[K, V any] struct {
 
 // cacheEntry represents a single entry in the FIFO cache.
 // It contains a key-value pair.
-type cacheEntry struct {
-	key   any
-	value any
+type cacheEntry[K, V any] struct {
+	key   K
+	value V
 }
 
-// SetOnRemovedCallBack register a call back function, it will be invoked when any entry is eliminating or removing.
+// NewFIFOCache creates a new FIFOCache with the specified maximum number of elements.
+func NewFIFOCache[K, V any](maxElements int, threadSafe bool) *FIFOCache[K, V] {
+	return &FIFOCache[K, V]{
+		threadSafe:  threadSafe,
+		maxElements: maxElements,
+		_list:       list.New(),
+		cache:       make(map[any]*list.Element),
+	}
+}
+
+// SetOnRemovedCallBack registers a callback function that will be invoked when any entry is eliminated or removed.
 func (c *FIFOCache[K, V]) SetOnRemovedCallBack(callback func(k K, v V)) {
 	if c.threadSafe {
 		c.mu.Lock()
@@ -49,10 +59,10 @@ func (c *FIFOCache[K, V]) putAndOverwriteIfExist(k K, v V, overwrite bool) bool 
 	// If the key exists
 	if ok {
 		if overwrite {
-			// Move the existing entry to the head of the list
+			// Move the existing entry to the front of the list
 			c._list.MoveToFront(ele)
 			// Update the value of the existing entry
-			ele.Value.(*cacheEntry).value = v
+			ele.Value.(*cacheEntry[K, V]).value = v
 			return true // Operation successful
 		}
 		return false // Operation unsuccessful (key exists and overwrite is false)
@@ -60,27 +70,26 @@ func (c *FIFOCache[K, V]) putAndOverwriteIfExist(k K, v V, overwrite bool) bool 
 
 	// If the key does not exist
 	// Create a new cache entry
-	newEntry := &cacheEntry{k, v}
-	// Put the new cache entry at the head of the list
+	newEntry := &cacheEntry[K, V]{k, v}
+	// Put the new cache entry at the front of the list
 	newEle := c._list.PushFront(newEntry)
 	c.cache[k] = newEle
+	c.currentElements++
 
-	// Check the count of elements
+	// Check if we need to eliminate an entry
 	if c.currentElements > c.maxElements {
-		// Eliminate a cache entry from the end of the list
+		// Eliminate a cache entry from the back of the list
 		eleEliminated := c._list.Back()
 		if eleEliminated != nil {
-			entryEliminated, _ := eleEliminated.Value.(*cacheEntry)
+			entryEliminated, _ := eleEliminated.Value.(*cacheEntry[K, V])
 			delete(c.cache, entryEliminated.key)
 			c._list.Remove(eleEliminated)
+			c.currentElements--
 			if c.onRemoved != nil {
-				c.onRemoved(entryEliminated.key.(K), entryEliminated.value.(V))
+				c.onRemoved(entryEliminated.key, entryEliminated.value)
 			}
 		}
-		return true // Operation successful
 	}
-
-	c.currentElements++
 	return true // Operation successful
 }
 
@@ -99,8 +108,8 @@ func (c *FIFOCache[K, V]) PutIfNotExist(k K, v V) bool {
 // It returns the value and a boolean indicating whether the key was found in the cache.
 func (c *FIFOCache[K, V]) Get(k K) (v V, found bool) {
 	if c.threadSafe {
-		c.mu.Lock()
-		defer c.mu.Unlock()
+		c.mu.RLock()
+		defer c.mu.RUnlock()
 	}
 
 	// Check if the key exists in the cache
@@ -110,7 +119,7 @@ func (c *FIFOCache[K, V]) Get(k K) (v V, found bool) {
 	}
 
 	// Retrieve the value from the cache entry
-	return ele.Value.(*cacheEntry).value.(V), true // Return the value and indicate key found
+	return ele.Value.(*cacheEntry[K, V]).value, true // Return the value and indicate key found
 }
 
 // Remove removes the entry with the specified key from the FIFO cache.
@@ -135,7 +144,7 @@ func (c *FIFOCache[K, V]) Remove(k K) bool {
 
 		// Trigger the onRemoved callback function, if provided
 		if c.onRemoved != nil {
-			entry, _ := ele.Value.(*cacheEntry)
+			entry, _ := ele.Value.(*cacheEntry[K, V])
 			c.onRemoved(entry.key, entry.value)
 		}
 
@@ -149,8 +158,8 @@ func (c *FIFOCache[K, V]) Remove(k K) bool {
 // It returns a boolean indicating whether the key exists in the cache.
 func (c *FIFOCache[K, V]) Exist(k K) bool {
 	if c.threadSafe {
-		c.mu.Lock()
-		defer c.mu.Unlock()
+		c.mu.RLock()
+		defer c.mu.RUnlock()
 	}
 
 	// Check if the key exists in the cache
@@ -178,8 +187,8 @@ func (c *FIFOCache[K, V]) Clear() {
 // Size returns the current number of elements in the FIFO cache.
 func (c *FIFOCache[K, V]) Size() int {
 	if c.threadSafe {
-		c.mu.Lock()
-		defer c.mu.Unlock()
+		c.mu.RLock()
+		defer c.mu.RUnlock()
 	}
 
 	// Return the current number of elements in the cache
