@@ -16,6 +16,7 @@ type WorkerPool struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
+	taskWg        sync.WaitGroup
 	tasksC        chan Task
 	runningTasks  int32
 	workers       int
@@ -95,8 +96,10 @@ func (p *WorkerPool) startWorkers() {
 						return
 					}
 					atomic.AddInt32(&p.runningTasks, 1)
+					p.taskWg.Add(1)
 					task()
 					atomic.AddInt32(&p.runningTasks, -1)
+					p.taskWg.Done()
 				}
 			}
 		}()
@@ -138,6 +141,7 @@ func (p *WorkerPool) Close() {
 	p.running = false
 	p.cancel() // Signal all workers to exit
 	close(p.tasksC)
+	p.taskWg.Wait()
 	p.wg.Wait() // Wait for all workers to complete
 }
 
