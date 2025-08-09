@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+var (
+	ErrWorkerPoolClosed  = errors.New("worker pool is closed")
+	ErrWorkerPoolClosing = errors.New("worker pool is closing")
+)
+
 // Task represents a unit of work to be executed
 type Task func()
 
@@ -115,7 +120,7 @@ func (p *WorkerPool) Submit(task Task) error {
 		if p.rejectHandler != nil {
 			p.rejectHandler(task)
 		}
-		return errors.New("worker pool is closed")
+		return ErrWorkerPoolClosed
 	}
 
 	select {
@@ -123,7 +128,7 @@ func (p *WorkerPool) Submit(task Task) error {
 		if p.rejectHandler != nil {
 			p.rejectHandler(task)
 		}
-		return errors.New("worker pool is closing")
+		return ErrWorkerPoolClosing
 	case p.tasksC <- task:
 		return nil
 	}
