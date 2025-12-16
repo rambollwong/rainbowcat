@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build darwin
 
 package signal
 
@@ -13,10 +13,10 @@ import (
 func WaitForKeyPress() {
 	fmt.Println("\nPress any key to exit...")
 
-	// Linux/macOS processing (using x/sys/unix package)
+	// Darwin/macOS processing (using x/sys/unix package)
 	// Save original terminal settings
 	fd := int(os.Stdin.Fd())
-	oldState, err := unix.IoctlGetTermios(fd, unix.TCGETS) // Replace syscall.Gettermios
+	oldState, err := unix.IoctlGetTermios(fd, unix.TIOCGETA)
 	if err != nil {
 		fmt.Println("Failed to get terminal settings, exiting automatically...")
 		return
@@ -30,12 +30,12 @@ func WaitForKeyPress() {
 	newState.Cc[unix.VTIME] = 0    // No timeout
 
 	// Apply new settings
-	err = unix.IoctlSetTermios(fd, unix.TCSETS, &newState) // Replace syscall.Settermios
+	err = unix.IoctlSetTermios(fd, unix.TIOCSETA, &newState)
 	if err != nil {
 		fmt.Println("Failed to modify terminal settings, exiting automatically...")
 		return
 	}
-	defer unix.IoctlSetTermios(fd, unix.TCSETS, oldState) // Restore original settings
+	defer unix.IoctlSetTermios(fd, unix.TIOCSETA, oldState) // Restore original settings
 
 	// Read one character (any key)
 	var buf [1]byte
