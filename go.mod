@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sys v0.38.0
+	golang.org/x/sys v0.39.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
