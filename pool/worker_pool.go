@@ -89,9 +89,7 @@ func NewWorkerPool(workers int, opts ...Option) *WorkerPool {
 // startWorkers initializes and starts the worker goroutines
 func (p *WorkerPool) startWorkers() {
 	for i := 0; i < p.workers; i++ {
-		p.wg.Add(1)
-		go func() {
-			defer p.wg.Done()
+		p.wg.Go(func() {
 			for {
 				select {
 				case <-p.ctx.Done():
@@ -107,7 +105,7 @@ func (p *WorkerPool) startWorkers() {
 					p.taskWg.Done()
 				}
 			}
-		}()
+		})
 	}
 }
 

@@ -21,7 +21,7 @@ func TestBytesPoolPut(t *testing.T) {
 	var newTimes uint64
 	p := NewBytesPool(3, DefaultMaxBytesCap)
 	tmp := p.p.New
-	p.p.New = func() interface{} {
+	p.p.New = func() any {
 		atomic.AddUint64(&newTimes, 1)
 		return tmp()
 	}

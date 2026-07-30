@@ -63,7 +63,7 @@ func TestTimeRollingFileWriter_Rotate(t *testing.T) {
 	}
 	defer writer.Close()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		// Write data
 		data := []byte("Hello, World!")
 		_, err = writer.Write(data)

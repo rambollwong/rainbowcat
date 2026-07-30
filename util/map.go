@@ -1,5 +1,7 @@
 package util
 
+import maps0 "maps"
+
 import "github.com/rambollwong/rainbowcat/types"
 
 // MapKeys creates an array of the map keys.
@@ -131,9 +133,7 @@ func MapInvert[K comparable, V comparable](in map[K]V) map[V]K {
 func MapAssign[K comparable, V any](maps ...map[K]V) map[K]V {
 	out := map[K]V{}
 	for _, m := range maps {
-		for k, v := range m {
-			out[k] = v
-		}
+		maps0.Copy(out, m)
 	}
 	return out
 }

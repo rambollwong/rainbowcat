@@ -287,7 +287,7 @@ func TestFIFOCache_ThreadSafe(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Test concurrent Put operations
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -297,7 +297,7 @@ func TestFIFOCache_ThreadSafe(t *testing.T) {
 	wg.Wait()
 
 	// Verify all items were inserted
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		if value, found := cache.Get(i); !found || value != i*2 {
 			t.Errorf("Expected key %d to have value %d, got %d, found: %v", i, i*2, value, found)
 		}
@@ -305,7 +305,7 @@ func TestFIFOCache_ThreadSafe(t *testing.T) {
 
 	// Test concurrent Get operations
 	wg = sync.WaitGroup{}
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -319,7 +319,7 @@ func TestFIFOCache_ThreadSafe(t *testing.T) {
 
 	// Test mixed concurrent operations
 	wg = sync.WaitGroup{}
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(2)
 		// Concurrent Put
 		go func(i int) {
@@ -341,11 +341,11 @@ func TestFIFOCache_NonThreadSafe(t *testing.T) {
 	// This test just verifies it works in single-threaded context
 	cache := NewFIFOCache[int, int](10, false)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		cache.Put(i, i*2)
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		if value, found := cache.Get(i); !found || value != i*2 {
 			t.Errorf("Expected key %d to have value %d, got %d, found: %v", i, i*2, value, found)
 		}

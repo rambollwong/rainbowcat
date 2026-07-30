@@ -135,7 +135,7 @@ func RunParallelTaskPipeline(
 		outputC:       make(chan any),
 		closeC:        make(chan struct{}),
 	}
-	for i := uint8(0); i < pipelineCount; i++ {
+	for i := range pipelineCount {
 		tp := &taskPipeline{
 			index:   i,
 			jobC:    make(chan *Job, maxConcurrentQuantities[i]),

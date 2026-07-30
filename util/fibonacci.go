@@ -3,7 +3,7 @@ package util
 // FibonacciArray create a fibonacci array with length n.
 func FibonacciArray(n int) []int64 {
 	res := make([]int64, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if i <= 1 {
 			res[i] = 1
 		} else {

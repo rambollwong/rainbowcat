@@ -14,3 +14,8 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 .idea
+
+# AI Doc
+AGENTS.md
+.reasonix/
+prompt.md

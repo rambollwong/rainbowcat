@@ -36,7 +36,7 @@ func TestSubmitTask(t *testing.T) {
 
 	// Submit multiple tasks
 	numTasks := 10
-	for i := 0; i < numTasks; i++ {
+	for range numTasks {
 		err := pool.Submit(task)
 		require.NoError(t, err)
 	}
@@ -104,7 +104,7 @@ func TestPendingTasks(t *testing.T) {
 	}
 
 	// Submit more tasks than workers
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		err := pool.Submit(blockingTask)
 		require.NoError(t, err)
 	}

@@ -178,7 +178,7 @@ func (c *FIFOCache[K, V]) Clear() {
 	c.currentElements = 0
 
 	// Create a new empty cache map
-	c.cache = make(map[interface{}]*list.Element)
+	c.cache = make(map[any]*list.Element)
 
 	// Create a new empty linked list
 	c._list = list.New()

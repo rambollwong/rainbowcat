@@ -2,28 +2,19 @@ package util
 
 import (
 	"math/rand"
+	"slices"
 
 	"github.com/rambollwong/rainbowcat/types"
 )
 
 // SliceContains returns true if an element is present in a collection.
 func SliceContains[T comparable](collection []T, element T) bool {
-	for _, item := range collection {
-		if item == element {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(collection, element)
 }
 
 // SliceContainsOneBy returns true if predicate function return true.
 func SliceContainsOneBy[T any](collection []T, predicate func(item T) bool) bool {
-	for _, item := range collection {
-		if predicate(item) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(collection, predicate)
 }
 
 // SliceContainsAll returns true if all elements of a subset are contained into a collection or if the subset is empty.
@@ -67,12 +58,7 @@ func SliceContainsOneOf[T comparable](collection []T, subset []T) bool {
 
 // SliceContainsNoneBy returns false if predicate function return true.
 func SliceContainsNoneBy[T any](collection []T, predicate func(item T) bool) bool {
-	for _, item := range collection {
-		if predicate(item) {
-			return false
-		}
-	}
-	return true
+	return !slices.ContainsFunc(collection, predicate)
 }
 
 func sliceIntersect[T comparable](list1 []T, list2 []T) []T {
@@ -287,10 +273,7 @@ func SliceCutChunks[T any](collection []T, size int) [][]T {
 	}
 	result := make([][]T, 0, chunksNum)
 	for i := 0; i < chunksNum; i++ {
-		lastIndex := (i + 1) * size
-		if lastIndex > len(collection) {
-			lastIndex = len(collection)
-		}
+		lastIndex := min((i+1)*size, len(collection))
 		result = append(result, collection[i*size:lastIndex])
 	}
 	return result
@@ -360,7 +343,7 @@ func SliceFill[T types.Clonable[T]](collection []T, initial T) []T {
 // SliceRepeat builds a slice with N copies of initial value.
 func SliceRepeat[T types.Clonable[T]](count int, initial T) []T {
 	result := make([]T, 0, count)
-	for i := 0; i < count; i++ {
+	for range count {
 		result = append(result, initial.Clone())
 	}
 	return result
@@ -369,7 +352,7 @@ func SliceRepeat[T types.Clonable[T]](count int, initial T) []T {
 // SliceRepeatBy builds a slice with values returned by N calls of callback.
 func SliceRepeatBy[T any](count int, predicate func(index int) T) []T {
 	result := make([]T, 0, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		result = append(result, predicate(i))
 	}
 	return result
@@ -475,10 +458,7 @@ func SliceValuesCountBy[T any, U comparable](collection []T, mapper func(item T)
 func SliceSubset[T any](collection []T, offset int, length uint) []T {
 	size := len(collection)
 	if offset < 0 {
-		offset = size + offset
-		if offset < 0 {
-			offset = 0
-		}
+		offset = max(size+offset, 0)
 	}
 	if offset > size {
 		return []T{}

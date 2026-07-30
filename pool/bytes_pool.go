@@ -34,7 +34,7 @@ func NewBytesPool(initCap, maxCap int) *BytesPool {
 	}
 	return &BytesPool{
 		p: &sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				bz := make([]byte, 0, initCap)
 				return &bz
 			},
