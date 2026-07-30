@@ -5,18 +5,20 @@ import maps0 "maps"
 import "github.com/rambollwong/rainbowcat/types"
 
 // MapKeys creates an array of the map keys.
+// Internally collects from maps.Keys iterator (stdlib, Go 1.23+).
 func MapKeys[K comparable, V any](in map[K]V) []K {
 	result := make([]K, 0, len(in))
-	for k := range in {
+	for k := range maps0.Keys(in) {
 		result = append(result, k)
 	}
 	return result
 }
 
 // MapValues creates an array of the map values.
+// Internally collects from maps.Values iterator (stdlib, Go 1.23+).
 func MapValues[K comparable, V any](in map[K]V) []V {
 	result := make([]V, 0, len(in))
-	for _, v := range in {
+	for v := range maps0.Values(in) {
 		result = append(result, v)
 	}
 	return result
@@ -98,9 +100,10 @@ func MapExcludeByValues[K comparable, V comparable](in map[K]V, values []V) map[
 }
 
 // MapEntries transforms a map into array of key/value pairs.
+// Internally collects from maps.All iterator (stdlib, Go 1.23+).
 func MapEntries[K comparable, V any](in map[K]V) []types.Entry[K, V] {
 	entries := make([]types.Entry[K, V], 0, len(in))
-	for k, v := range in {
+	for k, v := range maps0.All(in) {
 		entries = append(entries, types.Entry[K, V]{
 			Key:   k,
 			Value: v,
@@ -110,12 +113,15 @@ func MapEntries[K comparable, V any](in map[K]V) []types.Entry[K, V] {
 }
 
 // MapFromEntries transforms an array of key/value pairs into a map.
+// Internally uses maps.Collect (stdlib, Go 1.23+).
 func MapFromEntries[K comparable, V any](entries []types.Entry[K, V]) map[K]V {
-	out := make(map[K]V, len(entries))
-	for _, v := range entries {
-		out[v.Key] = v.Value
-	}
-	return out
+	return maps0.Collect(func(yield func(K, V) bool) {
+		for _, v := range entries {
+			if !yield(v.Key, v.Value) {
+				break
+			}
+		}
+	})
 }
 
 // MapInvert creates a map composed of the inverted keys and values. If map

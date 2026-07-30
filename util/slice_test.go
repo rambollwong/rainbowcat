@@ -8,55 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSliceContains(t *testing.T) {
-	t.Parallel()
-	res1 := SliceContains([]int{0, 1, 2, 3, 4, 5}, 5)
-	res2 := SliceContains([]int{0, 1, 2, 3, 4, 5}, 6)
-
-	require.True(t, res1)
-	require.False(t, res2)
-}
-
-func TestSliceContainsOneBy(t *testing.T) {
-	t.Parallel()
-
-	type a struct {
-		A int
-		B int
-	}
-
-	a1 := []a{{
-		A: 1,
-		B: 1,
-	}, {
-		A: 2,
-		B: 2,
-	}, {
-		A: 3,
-		B: 3,
-	}}
-
-	res1 := SliceContainsOneBy(a1, func(item a) bool {
-		return item.A == 1 && item.B == 2
-	})
-	res2 := SliceContainsOneBy(a1, func(item a) bool {
-		return item.A == 1 && item.B == 1
-	})
-
-	a2 := []string{"a", "b", "c"}
-	res3 := SliceContainsOneBy(a2, func(item string) bool {
-		return item == ""
-	})
-	res4 := SliceContainsOneBy(a2, func(item string) bool {
-		return item == "b"
-	})
-
-	require.False(t, res1)
-	require.True(t, res2)
-	require.False(t, res3)
-	require.True(t, res4)
-}
-
 func TestSliceContainsAll(t *testing.T) {
 	t.Parallel()
 
@@ -117,28 +68,6 @@ func TestSliceContainsOneOf(t *testing.T) {
 	res7 := SliceContainsOneOf([]*a{a1, {A: 2}}, []*a{{A: 1}})
 	require.True(t, res6)
 	require.False(t, res7)
-}
-
-func TestSliceContainsNoneBy(t *testing.T) {
-	t.Parallel()
-
-	res1 := SliceContainsNoneBy([]int{1, 2, 3}, func(i int) bool {
-		return i < 4
-	})
-	res2 := SliceContainsNoneBy([]int{1, 2, 3}, func(i int) bool {
-		return i < 3
-	})
-	res3 := SliceContainsNoneBy([]int{1, 2, 3}, func(i int) bool {
-		return i < 0
-	})
-	res4 := SliceContainsNoneBy([]int{}, func(i int) bool {
-		return i < 4
-	})
-
-	require.False(t, res1)
-	require.False(t, res2)
-	require.True(t, res3)
-	require.True(t, res4)
 }
 
 func TestSliceIntersect(t *testing.T) {
@@ -374,18 +303,6 @@ func TestSliceShuffle(t *testing.T) {
 
 	require.NotEqual(t, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, res1)
 	require.Equal(t, []int{}, res2)
-}
-
-func TestSliceReverse(t *testing.T) {
-	t.Parallel()
-
-	res1 := SliceReverse([]int{0, 1, 2, 3, 4, 5})
-	res2 := SliceReverse([]int{0, 1, 2, 1, 2})
-	res3 := SliceReverse([]int{})
-
-	require.Equal(t, []int{5, 4, 3, 2, 1, 0}, res1)
-	require.Equal(t, []int{2, 1, 2, 1, 0}, res2)
-	require.Equal(t, []int{}, res3)
 }
 
 func TestSliceFill(t *testing.T) {

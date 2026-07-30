@@ -6,6 +6,7 @@ import (
 )
 
 // Uint64ToBytes converts a uint64 value to a byte slice.
+// This is a BigEndian convenience wrapper around encoding/binary.Write.
 func Uint64ToBytes(n uint64) []byte {
 	x := n
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -14,6 +15,7 @@ func Uint64ToBytes(n uint64) []byte {
 }
 
 // BytesToUint64 converts a byte slice to a uint64 value.
+// This is a BigEndian convenience wrapper around encoding/binary.Read.
 func BytesToUint64(b []byte) uint64 {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x uint64
@@ -22,6 +24,7 @@ func BytesToUint64(b []byte) uint64 {
 }
 
 // Uint32ToBytes converts a uint32 value to a byte slice.
+// This is a BigEndian convenience wrapper around encoding/binary.Write.
 func Uint32ToBytes(n uint32) []byte {
 	x := n
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -30,6 +33,7 @@ func Uint32ToBytes(n uint32) []byte {
 }
 
 // BytesToUint32 converts a byte slice to a uint32 value.
+// This is a BigEndian convenience wrapper around encoding/binary.Read.
 func BytesToUint32(b []byte) uint32 {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x uint32
@@ -38,6 +42,7 @@ func BytesToUint32(b []byte) uint32 {
 }
 
 // UintToBytes converts a uint value to a byte slice.
+// This is a BigEndian convenience wrapper around encoding/binary.Write.
 func UintToBytes(n uint) []byte {
 	x := uint64(n)
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -46,6 +51,7 @@ func UintToBytes(n uint) []byte {
 }
 
 // BytesToUint converts a byte slice to a uint value.
+// This is a BigEndian convenience wrapper around encoding/binary.Read.
 func BytesToUint(b []byte) uint {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x uint64
@@ -54,6 +60,7 @@ func BytesToUint(b []byte) uint {
 }
 
 // Int64ToBytes converts an int64 value to a byte slice.
+// This is a BigEndian convenience wrapper around encoding/binary.Write.
 func Int64ToBytes(n int64) []byte {
 	x := n
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -62,6 +69,7 @@ func Int64ToBytes(n int64) []byte {
 }
 
 // BytesToInt64 converts a byte slice to an int64 value.
+// This is a BigEndian convenience wrapper around encoding/binary.Read.
 func BytesToInt64(b []byte) int64 {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x int64
@@ -70,6 +78,7 @@ func BytesToInt64(b []byte) int64 {
 }
 
 // Int32ToBytes converts an int32 value to a byte slice.
+// This is a BigEndian convenience wrapper around encoding/binary.Write.
 func Int32ToBytes(n int32) []byte {
 	x := n
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -78,6 +87,7 @@ func Int32ToBytes(n int32) []byte {
 }
 
 // BytesToInt32 converts a byte slice to an int32 value.
+// This is a BigEndian convenience wrapper around encoding/binary.Read.
 func BytesToInt32(b []byte) int32 {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x int32
@@ -86,6 +96,7 @@ func BytesToInt32(b []byte) int32 {
 }
 
 // IntToBytes converts an int value to a byte slice.
+// This is a BigEndian convenience wrapper around encoding/binary.Write.
 func IntToBytes(n int) []byte {
 	x := int64(n)
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -94,6 +105,7 @@ func IntToBytes(n int) []byte {
 }
 
 // BytesToInt converts a byte slice to an int value.
+// This is a BigEndian convenience wrapper around encoding/binary.Read.
 func BytesToInt(b []byte) int {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x int64

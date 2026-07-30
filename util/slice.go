@@ -1,21 +1,10 @@
 package util
 
 import (
-	"math/rand"
-	"slices"
+	"math/rand/v2"
 
 	"github.com/rambollwong/rainbowcat/types"
 )
-
-// SliceContains returns true if an element is present in a collection.
-func SliceContains[T comparable](collection []T, element T) bool {
-	return slices.Contains(collection, element)
-}
-
-// SliceContainsOneBy returns true if predicate function return true.
-func SliceContainsOneBy[T any](collection []T, predicate func(item T) bool) bool {
-	return slices.ContainsFunc(collection, predicate)
-}
 
 // SliceContainsAll returns true if all elements of a subset are contained into a collection or if the subset is empty.
 func SliceContainsAll[T comparable](collection []T, subset []T) bool {
@@ -54,11 +43,6 @@ func SliceContainsOneOf[T comparable](collection []T, subset []T) bool {
 		}
 	}
 	return false
-}
-
-// SliceContainsNoneBy returns false if predicate function return true.
-func SliceContainsNoneBy[T any](collection []T, predicate func(item T) bool) bool {
-	return !slices.ContainsFunc(collection, predicate)
 }
 
 func sliceIntersect[T comparable](list1 []T, list2 []T) []T {
@@ -313,21 +297,10 @@ func SliceInterleaveFlatten[T any](collections ...[]T) []T {
 
 // SliceShuffle returns an array of shuffled values. Uses the Fisher-Yates shuffle algorithm.
 func SliceShuffle[T any](collection []T) []T {
-	rand.Shuffle(len(collection), func(i, j int) {
+	rng := rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64()))
+	rng.Shuffle(len(collection), func(i, j int) {
 		collection[i], collection[j] = collection[j], collection[i]
 	})
-	return collection
-}
-
-// SliceReverse reverses array so that the first element becomes the last,
-// the second element becomes the second to last, and so on.
-func SliceReverse[T any](collection []T) []T {
-	length := len(collection)
-	half := length / 2
-	for i := 0; i < half; i = i + 1 {
-		j := length - 1 - i
-		collection[i], collection[j] = collection[j], collection[i]
-	}
 	return collection
 }
 
